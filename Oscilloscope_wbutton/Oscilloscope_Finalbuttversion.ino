@@ -25,35 +25,35 @@ const char hRangeName[10][6] PROGMEM = {"200ms", "100ms", " 50ms", " 20ms", " 10
 const char * const hstring_table[] PROGMEM = {hRangeName[0], hRangeName[1], hRangeName[2], hRangeName[3], hRangeName[4], hRangeName[5], hRangeName[6], hRangeName[7], hRangeName[8], hRangeName[9]};
 const PROGMEM float hRangeValue[] = { 0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.002, 0.001, 0.5e-3, 0.2e-3}; // matriz con valores para visualización en el eje x. ( = 25pix on screen)
 
-int waveBuff[REC_LENG];        // inicia el buffer para señales con su tamaño          wave form buffer (RAM remaining capacity is barely)
-char chrBuff[8];               // display string buffer         inicio
-char hScale[] = "xxxAs";       // horizontal scale character
-char vScale[] = "xxxx";        // vartical scale
+int waveBuff[REC_LENG];        // inicia el buffer para señales con su tamaño  
+char chrBuff[8];               
+char hScale[] = "xxxAs";       
+char vScale[] = "xxxx";        
 
-float lsb5V = 0.00566826;      // Coeficiente de sensibilidad para rango 5V, servirá para dividir los valores de voltaje hasta este rango [1.1*630/(1024*120)]
-float lsb50V = 0.05243212;     // Coeficiente de sensibilidad para rango 50V, servirá para dividir la visualización hasta este rango [1.1*520.91/(1024*10.91)]
+float lsb5V = 0.00566826;      
+float lsb50V = 0.05243212;     
 
 volatile int vRange;           // contendrá codificados los caracteres para los valores en el eje y. 0:A50V,  1:A 5V,  2:50V,  3:20V,  4:10V,  5:5V,  6:2V,  7:1V,  8:0.5V,  9:0.2V
 volatile int hRange;           // contendrá codificados los caracteres para los valores en el eje x. 0:200ms, 1:100ms, 2:50ms, 3:20ms, 4:10ms, 5:5ms, 6;2ms, 7:1ms, 8:500us, 9;200us
 volatile boolean switchPushed;
-volatile int trigD;            // trigger slope flag,     0:positive 1:negative
-volatile int scopeP;           // operation scope position number. 0:Veratical, 1:Hrizontal, 2:Trigger slope
+volatile int trigD;            
+volatile int scopeP;           
 
 volatile int saveTimer;        // Tiempo hasta guardar en la EEPROM
-int timeExec;                  // Tiempo de ejecución para los ajustes definidos           approx. execution time of current range setting (ms)
+int timeExec;                  // Tiempo de ejecución para los ajustes definidos        
 
 int holdButt = 11;
 volatile boolean pressedButt = false; 
-int dataMin;                   // buffer minimum value (smallest=0)
-int dataMax;                   //        maximum value (largest=1023)
-int dataAve;                   // 10 x average value (use 10x value to keep accuracy. so, max=10230)
-int rangeMax;                  // buffer value to graph full swing
-int rangeMin;                  // buffer value of graph botto
-int rangeMaxDisp;              // display value of max. (100x value)
-int rangeMinDisp;              // display value if min.
-int trigP;                     // trigger position pointer on data buffer
-boolean trigSync;              // flag of trigger detected
-int att10x;                    // 10x attenetor ON (effective when 1)
+int dataMin;                   
+int dataMax;                   
+int dataAve;                   
+int rangeMax;                  
+int rangeMin;                  
+int rangeMaxDisp;              
+int rangeMinDisp;              
+int trigP;                     
+boolean trigSync;              
+int att10x;                   
 
 float waveFreq;                // Frecuencia de la onda en Hz
 float waveDuty;                // porcentaje del ciclo de trabajo
@@ -70,28 +70,28 @@ void setup() {
 
   oled.begin(SSD1306_SWITCHCAPVCC,  0x3C); //iniciar pantalla
 
-  //auxFunctions();                       // Voltage measure (never return)
-  loadEEPROM();                         // read last settings from EEPROM
-  analogReference(INTERNAL);            // ADC full scale = 1.1V
+  //auxFunctions();                       
+  loadEEPROM();                        
+  analogReference(INTERNAL);         
   
   
-  startScreen();                        // display start message
+  startScreen();                        
 }
 
 void loop() {
   
 
-  setConditions();                      // set measurment conditions
-  digitalWrite(13, HIGH);               // flash LED
+  setConditions();                     
+  digitalWrite(13, HIGH);              
   readWave();                           // función para leer la forma de onda y guardarla en la memoria del buffer
-  digitalWrite(13, LOW);                // stop LED
-  setConditions();                      // set measurment conditions again (reflect change during measure)
-  dataAnalize();                        // analize data
-  writeCommonImage();                   // write fixed screen image (2.6ms)
-  plotData();                           // plot waveform (10-18ms)
-  dispInf();                            // display information (6.5-8.5ms)
-  oled.display();                       // send screen buffer to OLED (37ms)
-  saveEEPROM();                         // save settings to EEPROM if necessary
+  digitalWrite(13, LOW);             
+  setConditions();                     
+  dataAnalize();                      
+  writeCommonImage();                  
+  plotData();                      
+  dispInf();                       
+  oled.display();                  
+  saveEEPROM();                      
   pressedButt=buttonDetector();
   if(pressedButt){
   while(buttonDetector()){
@@ -107,10 +107,10 @@ void loop() {
 }
 
 void setConditions() {           // ajustes en la medida
-  // get range name from PROGMEM
+
   strcpy_P(hScale, (char*)pgm_read_word(&(hstring_table[hRange])));  // mapea los posibles caracteres en el eje x con sus valores
   strcpy_P(vScale, (char*)pgm_read_word(&(vstring_table[vRange])));  // mapea los posibles caracteres en el eje y con sus valores
-  rangeMax = 20 / lsb50V;  // set full scale pixcel count number
+  rangeMax = 20 / lsb50V; 
   rangeMaxDisp = 2000;
   rangeMin = 0;
   rangeMinDisp = 0;
@@ -157,8 +157,8 @@ void writeCommonImage() {                 // Función para representar la malla 
 
 bool buttonDetector() {
   
-  if (digitalRead(holdButt) == 0) {           // if HOLD button(pin11) pushed
-    pressedButt = true;                 // revers the flag
+  if (digitalRead(holdButt) == 0) {          
+    pressedButt = true;                
   } else {
     pressedButt=false;
   }
@@ -174,7 +174,7 @@ void readWave() {                            // Función para guardar la forma d
   } else {                                   //
     pinMode(12, INPUT);                      // Realiza función de alta impedancia 
   }
-  switchPushed = false;                      // Clear switch operation flag
+  switchPushed = false;                
   timeExec = 160 + 60;                 
         ADCSRA = ADCSRA & 0xf8;              
         ADCSRA = ADCSRA | 0x07;              
@@ -229,25 +229,25 @@ void dataAnalize() {                       // obtención de información a parti
     // 
   }
 
-  // Trigger position search
-  for (trigP = ((REC_LENG / 2) - 51); trigP < ((REC_LENG / 2) + 50); trigP++) { // Find the points that straddle the median at the center ± 50 of the data range
-    if (trigD == 0) {                             // if trigger direction is positive
+ 
+  for (trigP = ((REC_LENG / 2) - 51); trigP < ((REC_LENG / 2) + 50); trigP++) { 
+    if (trigD == 0) {                           
       if ((waveBuff[trigP - 1] < (dataMax + dataMin) / 2) && (waveBuff[trigP] >= (dataMax + dataMin) / 2)) {
-        break;                                    // positive trigger position found !
+        break;                                  
       }
-    } else {                                      // trigger direction is negative
+    } else {                                    
       if ((waveBuff[trigP - 1] > (dataMax + dataMin) / 2) && (waveBuff[trigP] <= (dataMax + dataMin) / 2)) {
         break;
-      }                                           // negative trigger poshition found !
+      }                                       
     }
   }
   trigSync = true;
-  if (trigP >= ((REC_LENG / 2) + 50)) {           // If the trigger is not found in range
-    trigP = (REC_LENG / 2);                       // Set it to the center for the time being
-    trigSync = false;                             // set Unsync display flag
+  if (trigP >= ((REC_LENG / 2) + 50)) {          
+    trigP = (REC_LENG / 2);                       
+    trigSync = false;                           
   }
-  if ((dataMax - dataMin) <= MIN_TRIG_SWING) {    // amplitude of the waveform smaller than the specified value
-    trigSync = false;                             // set Unsync display flag
+  if ((dataMax - dataMin) <= MIN_TRIG_SWING) {    
+    trigSync = false;                             
   }
   freqDuty();
 }
@@ -257,8 +257,8 @@ void freqDuty() {                               // función para anaizar el cicl
   float p0 = 0;                                 // primer ciclo positivo
   float p1 = 0;                                 // duración total de ciclos
   float p2 = 0;                                 // duración total de pulso a nivel alto
-  float pFine = 0;                              // fine position (0-1.0)
-  float lastPosiEdge;                           // last positive edge position
+  float pFine = 0;                            
+  float lastPosiEdge;                       
 
   float pPeriod;                                // Periodo del pulso
   float pWidth;                                 // anchura del pulso
@@ -271,25 +271,25 @@ void freqDuty() {                               // función para anaizar el cicl
 
   swingCenter = (3 * (dataMin + dataMax)) / 2;   // calculo del valor medio
 
-  for (int i = 1; i < REC_LENG - 2; i++) {       // scan all over the buffer
-    if (posiSerch == true) {   // posi slope (frequency serch)
-      if ((sum3(i) <= swingCenter) && (sum3(i + 1) > swingCenter)) {  // if across the center when rising (+-3data used to eliminate noize)
-        pFine = (float)(swingCenter - sum3(i)) / ((swingCenter - sum3(i)) + (sum3(i + 1) - swingCenter) );  // fine cross point calc.
-        if (a0Detected == false) {               // if 1-st cross
-          a0Detected = true;                     // 
+  for (int i = 1; i < REC_LENG - 2; i++) {     
+    if (posiSerch == true) {  
+      if ((sum3(i) <= swingCenter) && (sum3(i + 1) > swingCenter)) { 
+        pFine = (float)(swingCenter - sum3(i)) / ((swingCenter - sum3(i)) + (sum3(i + 1) - swingCenter) );  
+        if (a0Detected == false) {              
+          a0Detected = true;                    
           p0 = i + pFine;                        // guardado de la posición como punto de partida
         } else {
-          p1 = i + pFine - p0;                   // record length (length of n*cycle time)
+          p1 = i + pFine - p0;                  
           p1Count++;
         }
         lastPosiEdge = i + pFine;                // posición guardada para calcular el ancho del pulso
         posiSerch = false;
       }
-    } else {   // nega slope serch (duration serch)
-      if ((sum3(i) >= swingCenter) && (sum3(i + 1) < swingCenter)) {  // if across the center when falling (+-3data used to eliminate noize)
+    } else {  
+      if ((sum3(i) >= swingCenter) && (sum3(i + 1) < swingCenter)) {  
         pFine = (float)(sum3(i) - swingCenter) / ((sum3(i) - swingCenter) + (swingCenter - sum3(i + 1)) );
         if (a0Detected == true) {
-          p2 = p2 + (i + pFine - lastPosiEdge);  // calucurate pulse width and accumurate it
+          p2 = p2 + (i + pFine - lastPosiEdge); 
           p2Count++;
         }
         posiSerch = true;
@@ -304,7 +304,7 @@ void freqDuty() {                               // función para anaizar el cicl
   waveDuty = 100.0 * pWidth / pPeriod;                                      // cálculo del ciclo de trabajo (duración del pulso/periodo)
 }
 
-int sum3(int k) {       // Sum of before and after and own value
+int sum3(int k) {       
   int m = waveBuff[k - 1] + waveBuff[k] + waveBuff[k + 1];
   return m;
 }
@@ -325,133 +325,133 @@ void startScreen() {                      // Transición de inicio
   oled.setTextSize(1);                    
 }
 
-void dispHold() {                         // display "Hold"
-  oled.fillRect(42, 11, 24, 8, BLACK);    // black paint 4 characters
+void dispHold() {                        
+  oled.fillRect(42, 11, 24, 8, BLACK);   
   oled.setCursor(42, 11);
-  oled.print(F("Hold"));                  // Hold
-  oled.display();                         //
+  oled.print(F("Hold"));                  
+  oled.display();                        
 }
 
-void dispInf() {                          // Display of various information
+void dispInf() {                          
   float voltage;
   // display vertical sensitivity
-  oled.setCursor(2, 0);                   // around top left
-  oled.print(vScale);                     // vertical sensitivity value
-  if (scopeP == 0) {                      // if scoped
-    oled.drawFastHLine(0, 7, 27, WHITE);  // display scoped mark at the bottom
+  oled.setCursor(2, 0);                   
+  oled.print(vScale);                    
+  if (scopeP == 0) {                    
+    oled.drawFastHLine(0, 7, 27, WHITE);  
     oled.drawFastVLine(0, 5, 2, WHITE);
     oled.drawFastVLine(26, 5, 2, WHITE);
   }
 
   // horizontal sweep speed
-  oled.setCursor(34, 0);                  //
-  oled.print(hScale);                     // display sweep speed (time/div)
-  if (scopeP == 1) {                      // if scoped
-    oled.drawFastHLine(32, 7, 33, WHITE); // display scoped mark at the bottom
+  oled.setCursor(34, 0);                
+  oled.print(hScale);                    
+  if (scopeP == 1) {                   
+    oled.drawFastHLine(32, 7, 33, WHITE);
     oled.drawFastVLine(32, 5, 2, WHITE);
     oled.drawFastVLine(64, 5, 2, WHITE);
   }
 
-  // trigger polarity
-  oled.setCursor(75, 0);                  // at top center
-  if (trigD == 0) {                       // if positive
-    oled.print(char(0x18));               // up mark
+  
+  oled.setCursor(75, 0);                 
+  if (trigD == 0) {                     
+    oled.print(char(0x18));               
   } else {
-    oled.print(char(0x19));               // down mark              ↓
+    oled.print(char(0x19));                  
   }
-  if (scopeP == 2) {                      // if scoped
-    oled.drawFastHLine(71, 7, 13, WHITE); // display scoped mark at the bottom
+  if (scopeP == 2) {                     
+    oled.drawFastHLine(71, 7, 13, WHITE); 
     oled.drawFastVLine(71, 5, 2, WHITE);
     oled.drawFastVLine(83, 5, 2, WHITE);
   }
 
-  // average voltage
-  if (att10x == 1) {                         // if 10x attenuator is used
-    voltage = dataAve * lsb50V / 10.0;       // 50V range value
-  } else {                                   // no!
-    voltage = dataAve * lsb5V / 10.0;        // 5V range value
-  }
-  if (voltage < 10.0) {                      // if less than 10V
-    dtostrf(voltage, 4, 2, chrBuff);         // format x.xx
-  } else {                                   // no!
-    dtostrf(voltage, 4, 1, chrBuff);         // format xx.x
-  }
-  oled.setCursor(98, 0);                     // around the top right
-  oled.print(chrBuff);                       // display average voltage圧の平均値を表示
-  //  oled.print(saveTimer);                 // use here for debugging
 
-  // vartical scale lines
-  voltage = rangeMaxDisp / 100.0;            // convart Max voltage
-  if (vRange == 1 || vRange > 4) {           // if range below 5V or Auto 5V
-    dtostrf(voltage, 4, 2, chrBuff);         // format *.**
-  } else {                                   // no!
-    dtostrf(voltage, 4, 1, chrBuff);         // format **.*
+  if (att10x == 1) {                       
+    voltage = dataAve * lsb50V / 10.0;     
+  } else {                                
+    voltage = dataAve * lsb5V / 10.0;      
+  }
+  if (voltage < 10.0) {                    
+    dtostrf(voltage, 4, 2, chrBuff);        
+  } else {                                  
+    dtostrf(voltage, 4, 1, chrBuff);         
+  }
+  oled.setCursor(98, 0);                    
+  oled.print(chrBuff);                      
+  //  oled.print(saveTimer);              
+
+
+  voltage = rangeMaxDisp / 100.0;           
+  if (vRange == 1 || vRange > 4) {        
+    dtostrf(voltage, 4, 2, chrBuff);        
+  } else {                                 
+    dtostrf(voltage, 4, 1, chrBuff);       
   }
   oled.setCursor(0, 9);
-  oled.print(chrBuff);                       // display Max value
+  oled.print(chrBuff);                     
 
-  voltage = (rangeMaxDisp + rangeMinDisp) / 200.0; // center value calculation
-  if (vRange == 1 || vRange > 4) {           // if range below 5V or Auto 5V
-    dtostrf(voltage, 4, 2, chrBuff);         // format *.**
-  } else {                                   // no!
-    dtostrf(voltage, 4, 1, chrBuff);         // format **.*
+  voltage = (rangeMaxDisp + rangeMinDisp) / 200.0;
+  if (vRange == 1 || vRange > 4) {          
+    dtostrf(voltage, 4, 2, chrBuff);         
+  } else {                                   
+    dtostrf(voltage, 4, 1, chrBuff);        
   }
   oled.setCursor(0, 33);
-  oled.print(chrBuff);                       // display the value
+  oled.print(chrBuff);                      
 
-  voltage = rangeMinDisp / 100.0;            // convart Min vpltage
-  if (vRange == 1 || vRange > 4) {           // if range below 5V or Auto 5V
-    dtostrf(voltage, 4, 2, chrBuff);         // format *.**
-  } else {                                   // no!
-    dtostrf(voltage, 4, 1, chrBuff);         // format **.*
+  voltage = rangeMinDisp / 100.0;           
+  if (vRange == 1 || vRange > 4) {          
+    dtostrf(voltage, 4, 2, chrBuff);       
+  } else {                                   
+    dtostrf(voltage, 4, 1, chrBuff);        
   }
   oled.setCursor(0, 57);
-  oled.print(chrBuff);                       // display the value
+  oled.print(chrBuff);                     
 
   // print de la frecuencia, el ciclo de trabajo o mensaje de no sincronizado
-  if (trigSync == false) {                   // If trigger point can't found
+  if (trigSync == false) {                   
     oled.fillRect(92, 14, 24, 8, BLACK);     
     oled.setCursor(92, 14);                  
     oled.print(F("unSync"));                 
   } else {
     oled.fillRect(90, 12, 25, 9, BLACK);    // si se ha sincronizado: borrado en la posición de la frecuencia
     oled.setCursor(91, 13);                  
-    if (waveFreq < 100.0) {                  // if less than 100Hz
-      oled.print(waveFreq, 1);               // display 99.9Hz
+    if (waveFreq < 100.0) {                  
+      oled.print(waveFreq, 1);              
       oled.print(F("Hz"));
-    } else if (waveFreq < 1000.0) {          // if less than 1000Hz
-      oled.print(waveFreq, 0);               // display 999Hz
+    } else if (waveFreq < 1000.0) {         
+      oled.print(waveFreq, 0);              
       oled.print(F("Hz"));
-    } else if (waveFreq < 10000.0) {         // if less than 10kHz
-      oled.print((waveFreq / 1000.0), 2);    // display 9.99kH
+    } else if (waveFreq < 10000.0) {        
+      oled.print((waveFreq / 1000.0), 2);    
       oled.print(F("kH"));
-    } else {                                 // if more
-      oled.print((waveFreq / 1000.0), 1);    // display 99.9kH
+    } else {                                
+      oled.print((waveFreq / 1000.0), 1);   
       oled.print(F("kH"));
     }
-    oled.fillRect(96, 21, 25, 10, BLACK);    // erase Freq area (as small as possible)
-    oled.setCursor(97, 23);                  // set location
-    oled.print(waveDuty, 1);                 // print del ciclo de trabajo
+    oled.fillRect(96, 21, 25, 10, BLACK);   
+    oled.setCursor(97, 23);                 
+    oled.print(waveDuty, 1);              
     oled.print(F("%"));
   }
 }
 
-void plotData() {                    // plot wave form on OLED
+void plotData() {                  
   long y1, y2;
   for (int x = 0; x <= 98; x++) {
-    y1 = map(waveBuff[x + trigP - 50], rangeMin, rangeMax, 63, 9); // convert to plot address
-    y1 = constrain(y1, 9, 63);                                     // Crush(Saturate) the protruding part
-    y2 = map(waveBuff[x + trigP - 49], rangeMin, rangeMax, 63, 9); // to address calucurate
-    y2 = constrain(y2, 9, 63);                                     //
-    oled.drawLine(x + 27, y1, x + 28, y2, WHITE);                  // connect between point
+    y1 = map(waveBuff[x + trigP - 50], rangeMin, rangeMax, 63, 9); 
+    y1 = constrain(y1, 9, 63);                                   
+    y2 = map(waveBuff[x + trigP - 49], rangeMin, rangeMax, 63, 9); 
+    y2 = constrain(y2, 9, 63);                                    
+    oled.drawLine(x + 27, y1, x + 28, y2, WHITE);                  
   }
 }
 
-void saveEEPROM() {                    // Save the setting value in EEPROM after waiting a while after the button operation.
-  if (saveTimer > 0) {                 // If the timer value is positive,
-    saveTimer = saveTimer - timeExec;  // Timer subtraction
-    if (saveTimer < 0) {               // if time up
-      EEPROM.write(0, vRange);         // save current status to EEPROM
+void saveEEPROM() {                    
+  if (saveTimer > 0) {                
+    saveTimer = saveTimer - timeExec;  
+    if (saveTimer < 0) {               
+      EEPROM.write(0, vRange);        
       EEPROM.write(1, hRange);
       EEPROM.write(2, trigD);
       EEPROM.write(3, scopeP);
@@ -459,27 +459,27 @@ void saveEEPROM() {                    // Save the setting value in EEPROM after
   }
 }
 
-void loadEEPROM() {                    // Read setting values from EEPROM (abnormal values will be corrected to default)
+void loadEEPROM() {                  
   int x;
-  x = EEPROM.read(0);                  // vRange
-  if ((x < 0) || (9 < x)) {            // if out side 0-9
-    x = 3;                             // default value
+  x = EEPROM.read(0);                  
+  if ((x < 0) || (9 < x)) {            
+    x = 3;                             
   }
   vRange = x;
 
-  x = EEPROM.read(1);                  // hRange
-  if ((x < 0) || (9 < x)) {            // if out of 0-9
-    x = 3;                             // default value
+  x = EEPROM.read(1);                 
+  if ((x < 0) || (9 < x)) {           
+    x = 3;                             
   }
   hRange = x;
-  x = EEPROM.read(2);                  // trigD
-  if ((x < 0) || (1 < x)) {            // if out of 0-1
-    x = 1;                             // default value
+  x = EEPROM.read(2);                 
+  if ((x < 0) || (1 < x)) {            
+    x = 1;                            
   }
   trigD = x;
-  x = EEPROM.read(3);                  // scopeP
-  if ((x < 0) || (2 < x)) {            // if out of 0-2
-    x = 1;                             // default value
+  x = EEPROM.read(3);                  
+  if ((x < 0) || (2 < x)) {           
+    x = 1;                            
   }
   scopeP = x;
 }
