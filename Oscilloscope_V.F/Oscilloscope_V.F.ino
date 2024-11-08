@@ -228,8 +228,8 @@ void freqDuty() {                               // función para anaizar el cicl
   float p0 = 0;                                 // primer ciclo positivo
   float p1 = 0;                                 // duración total de ciclos
   float p2 = 0;                                 // duración total de pulso a nivel alto
-  float pFine = 0;                              // fine position (0-1.0)                                   ////
-  float lastPosiEdge;                           // last positive edge position                                   ////
+  float pFine = 0;                              
+  float lastPosiEdge;                           
 
   float pPeriod;                                // Periodo del pulso
   float pWidth;                                 // anchura del pulso
@@ -245,9 +245,9 @@ void freqDuty() {                               // función para anaizar el cicl
   for (int i = 1; i < REC_LENG - 2; i++) {       // recorriendo todo el buffer
     if (posiSerch == true) {   // si tienes que buscar hacia delante
       if ((sum3(i) <= swingCenter) && (sum3(i + 1) > swingCenter)) {  // aumentendo posición a través del vector
-        pFine = (float)(swingCenter - sum3(i)) / ((swingCenter - sum3(i)) + (sum3(i + 1) - swingCenter) );  // fine cross point calc.                                   ////
-        if (a0Detected == false) {               // if 1-st cross                                   ////
-          a0Detected = true;                     // 
+        pFine = (float)(swingCenter - sum3(i)) / ((swingCenter - sum3(i)) + (sum3(i + 1) - swingCenter) );  
+        if (a0Detected == false) {               
+          a0Detected = true;                     
           p0 = i + pFine;                        // guardado de la posición como punto de partida
         } else {
           p1 = i + pFine - p0;                   //gurda la longitud de valores para el vector (n*ciclo)
@@ -257,7 +257,7 @@ void freqDuty() {                               // función para anaizar el cicl
         posiSerch = false;
       }
     } else {   // si tienes que buscar hacia atrás
-      if ((sum3(i) >= swingCenter) && (sum3(i + 1) < swingCenter)) {  // if across the center when falling (+-3data used to eliminate noize)                                   ////
+      if ((sum3(i) >= swingCenter) && (sum3(i + 1) < swingCenter)) {  
         pFine = (float)(sum3(i) - swingCenter) / ((sum3(i) - swingCenter) + (swingCenter - sum3(i + 1)) );
         if (a0Detected == true) {
           p2 = p2 + (i + pFine - lastPosiEdge);  // cálculo del ancho de pulso y acumulación
